@@ -42,5 +42,5 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Raw Data
-data/raw~/
+# build
+build/
