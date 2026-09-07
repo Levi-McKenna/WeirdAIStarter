@@ -23,8 +23,10 @@ class SimpleSelfAttention(nn.Module):
         # 1. Compute attention scores using matrix multiplication.
         # 2. Normalize scores with softmax.
         # 3. Compute context vectors as weighted sums of input vectors.
-
-        raise NotImplementedError("Implement simple self-attention.")
+        attention_score = x @ x.T
+        attention_weights = torch.softmax(attention_score, dim=-1)
+        context_vecs = attention_weights @ x
+        return context_vecs, attention_weights
 
 class SelfAttention(nn.Module):
     """
@@ -53,8 +55,16 @@ class SelfAttention(nn.Module):
         # 2. Compute scaled attention scores.
         # 3. Apply softmax.
         # 4. Compute context vectors.
+        query_v = self.query(x)
+        key_v = self.key(x)
+        values = self.value(x)
 
-        raise NotImplementedError("Implement trainable self-attention.")
+        attention_scores = query_v @ key_v.T
+        embed_dim = key_v.shape[-1]
+        attention_weights = torch.softmax(attention_scores / embed_dim**0.5,
+                                          dim=-1)
+        context_vecs = attention_weights @ values
+        return context_vecs, attention_weights
 
 class CausalAttention(nn.Module):
     """
@@ -90,5 +100,19 @@ class CausalAttention(nn.Module):
         # 4. Apply softmax.
         # 5. Apply dropout.
         # 6. Compute context vectors.
+        batch, token_count, embedding_dim = x.shape
+        query_v = self.query(x)
+        key_v = self.key(x)
+        values = self.value(x)
 
-        raise NotImplementedError("Implement causal attention.")
+        attention_scores = query_v @ key_v.transpose(1, 2)
+        attention_scores.masked_fill_(
+            self.mask.bool()[:token_count, :token_count], -torch.inf
+        )
+        attention_weights = torch.softmax(
+            attention_scores / embedding_dim**0.5, dim=-1
+        )
+        attention_weights = self.dropout(attention_weights)
+
+        context_vecs = attention_weights @ values
+        return context_vecs
