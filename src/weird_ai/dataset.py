@@ -14,4 +14,4 @@ class LyricsDataset:
         # Get the input/output token sequences
         # Calculate x by grabbing the sublist of tokens starting at the index up to the block_size
         # Calculate y by grabbing the sublist of tokens starting at index + 1 up to block_size + 1
-        pass
+        return self.tokens[index:index+self.block_size], self.tokens[index+1:self.block_size+1]

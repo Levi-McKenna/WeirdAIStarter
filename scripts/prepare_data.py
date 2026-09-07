@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from datasets import load_dataset
 from weird_ai.config import RAW_DATA_DIR, SAMPLE_LYRICS_FILE, PROCESSED_DATA_DIR
 
@@ -9,6 +11,8 @@ def main():
     limit = 5000
     selected_lyrics = []
 
+    # is this a fix or was it intentional ? we'll never know
+    RAW_DATA_DIR = Path.cwd() / "data/raw"
     PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     dataset = load_dataset(
