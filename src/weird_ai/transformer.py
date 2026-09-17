@@ -12,6 +12,7 @@ class TransformerBlock(nn.Module):
         self.ff = FeedForward(emb_dim)
         self.norm1 = LayerNorm(emb_dim)
         self.norm2 = LayerNorm(emb_dim)
+        self.drop_shortcut = nn.Dropout(dropout)
 
     
     # using 
@@ -23,11 +24,13 @@ class TransformerBlock(nn.Module):
         shortcut = x
         x = self.norm1(x)
         x = self.att(x)
+        x = self.drop_shortcut(x)
         x = x + shortcut
 
         shortcut = x
         x = self.norm2(x)
         x = self.ff(x)
+        x = self.drop_shortcut(x)
         x = x + shortcut
 
         return x
