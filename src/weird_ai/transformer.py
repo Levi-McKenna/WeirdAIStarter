@@ -6,7 +6,7 @@ from weird_ai.layer_norm import LayerNorm
 class TransformerBlock(nn.Module):
     # TODO 
     # Create a TransformerBlock class, inheriting from nn.Module
-    def __init__(self, emb_dim, context_length, num_heads, dropout, qkv_bias=False):
+    def __init__(self, emb_dim, context_length, dropout, qkv_bias=False):
         super().__init__()
         self.att = CausalAttention(emb_dim, emb_dim, context_length, qkv_bias)
         self.ff = FeedForward(emb_dim)
