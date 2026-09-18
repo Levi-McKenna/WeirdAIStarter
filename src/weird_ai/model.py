@@ -44,4 +44,7 @@ class WeirdAIModel(nn.Module):
         x = self.transformer(x)
         x = self.norm(x)
         logits = self.out_head(x)
+        # the final vector determines the next token in the sequence by
+        # selecting the highest normalized probablity (the highest individual
+        # element of the final vector)
         return logits
