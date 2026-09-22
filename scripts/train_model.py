@@ -21,10 +21,10 @@ def create_data_loader(tokenizer, text, batch_size, max_length, stride, shuffle=
 TRAIN_SETTINGS = {
     "learning_rate": 0.0001,
     "weight_decay": .01,
-    "batch_size": 4,
-    "epoch": 1,
-    "eval_freq": 5,
-    "prompt": "Love is",
+    "batch_size": 12,
+    "num_epoch": 1,
+    "eval_freq": 6,
+    "prompt": "Love is ",
     "checkpoint_path": PROJECT_ROOT / "models/lesson-05-pretrained/checkpoint.pt"
 }
 
@@ -33,7 +33,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    text = SAMPLE_LYRICS_FILE.read_text(encoding="utf-8")
+    text = SAMPLE_LYRICS_FILE.read_text(encoding="utf-8")[:100000]
     tokenizer = SimpleCharacterTokenizer(text)
 
     vocab_size = len(tokenizer.stoi)
@@ -51,8 +51,9 @@ def main():
         weight_decay=TRAIN_SETTINGS["weight_decay"]
     )
 
+    checkpoint = None
     try:
-        load_checkpoint(model, optimizer, TRAIN_SETTINGS["checkpoint_path"], device)
+        checkpoint = load_checkpoint(model, optimizer, TRAIN_SETTINGS["checkpoint_path"], device)
     except FileNotFoundError:
         print("No Checkpoint file found")
 
@@ -82,11 +83,17 @@ def main():
         num_workers=0
     )
     train_losses, val_losses, tokens_seen = train_model_simple(model, train_loader, val_loader, optimizer, device,
-                       TRAIN_SETTINGS["epoch"], TRAIN_SETTINGS["eval_freq"],
-                       TRAIN_SETTINGS["batch_size"], TRAIN_SETTINGS["prompt"],
+                       TRAIN_SETTINGS["num_epoch"], TRAIN_SETTINGS["eval_freq"], TRAIN_SETTINGS["prompt"],
                        tokenizer, WEIRD_AI_CFG["context_length"])
+    epoch = TRAIN_SETTINGS["num_epoch"]
 
-    save_checkpoint(model, optimizer, TRAIN_SETTINGS["epoch"], train_losses,
+    if checkpoint is not None:
+        epoch += checkpoint["epoch"]
+        tokens_seen = checkpoint["track_tokens_seen"] + tokens_seen
+        train_losses = checkpoint["train_losses"] + train_losses
+        val_losses = checkpoint["val_losses"] + val_losses
+
+    save_checkpoint(model, optimizer, epoch, train_losses,
                     val_losses, tokens_seen, TRAIN_SETTINGS["checkpoint_path"])
     print("Training complete.")
 

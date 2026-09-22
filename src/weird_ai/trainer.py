@@ -58,10 +58,10 @@ def train_model_simple(
     device,
     num_epochs,
     eval_freq,
-    eval_iter,
     start_context,
     tokenizer,
-    context_size
+    context_size,
+    eval_iter=None
 ):
     """
     Train the Weird AI model using a basic PyTorch training loop.
