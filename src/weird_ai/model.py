@@ -6,7 +6,8 @@ from weird_ai.transformer import TransformerBlock
 
 
 class WeirdAIModel(nn.Module):
-    def __init__(self, vocab_size, context_length, emb_dim, layers=4, drop_rate=0.1):
+    def __init__(self, vocab_size, context_length, emb_dim, layers=4,
+                 drop_rate=0.1, qkv_bias=False):
         super().__init__()
 
         # TODO:
@@ -18,7 +19,7 @@ class WeirdAIModel(nn.Module):
         self.drop_emb = nn.Dropout(drop_rate)
 
         self.transformer = nn.Sequential(
-            *[TransformerBlock(emb_dim, context_length, drop_rate) for _ in range(layers)]
+            *[TransformerBlock(emb_dim, context_length, drop_rate, qkv_bias) for _ in range(layers)]
         )
         self.norm = LayerNorm(emb_dim)
         self.out_head = nn.Linear(emb_dim, vocab_size, bias=False)

@@ -42,7 +42,12 @@ def evaluate_model(
     # 3. Calculate validation loss using calc_loss_loader.
     # 4. Return both losses.
 
-    raise NotImplementedError("Implement evaluate_model.")
+    with torch.no_grad():
+        train_loss = calc_loss_loader(train_loader, model, device,
+                                      num_batches=eval_iter)
+        val_loss = calc_loss_loader(val_loader, model, device,
+                                    num_batches=eval_iter)
+        return train_loss, val_loss
 
 
 def train_model_simple(
@@ -91,10 +96,12 @@ def train_model_simple(
     # TODO:
     # Move model to the selected device.
 
+    model.to(device)
     for epoch in range(num_epochs):
 
         # TODO:
         # Put model in training mode.
+        model.train()
 
         for input_batch, target_batch in train_loader:
 
@@ -105,19 +112,32 @@ def train_model_simple(
             # 4. Update model weights with optimizer.step().
             # 5. Update tokens_seen.
             # 6. Update global_step.
+            optimizer.zero_grad()
+            loss = calc_loss_batch(input_batch, target_batch, model, device)
+            loss.backward()
+            optimizer.step()
+            tokens_seen += input_batch.numel()
+            global_step += 1
+
 
             # TODO:
             # If global_step is divisible by eval_freq:
             #   1. Evaluate the model.
             #   2. Store train loss, validation loss, and tokens seen.
             #   3. Print progress.
-
-            pass
-
-        # TODO:
-        # At the end of each epoch, generate and print a sample.
-        # This helps visually inspect whether the model is improving.
-
+            if global_step % eval_freq == 0:
+                train_loss, val_loss = evaluate_model(model, train_loader,
+                                                      val_loader, device, eval_iter)
+                train_losses.append(train_loss)
+                val_losses.append(val_loss)
+                track_tokens_seen.append(tokens_seen)
+                print(f"Ep {epoch+1}, (Step {global_step:06d}): "
+                    f"Train loss {train_loss:.3f}, Val loss {val_loss:.3f}")
+            # TODO:
+            # At the end of each epoch, generate and print a sample.
+            # This helps visually inspect whether the model is improving.
+            generate_and_print_sample(model, tokenizer, device, start_context,
+                                      context_size)
     return train_losses, val_losses, track_tokens_seen
 
 
@@ -151,8 +171,14 @@ def save_checkpoint(
     #   train_losses
     #   val_losses
     #   track_tokens_seen
-
-    raise NotImplementedError("Implement save_checkpoint.")
+    torch.save({
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "epoch": epoch,
+        "train_losses": train_losses,
+        "val_losses": val_losses,
+        "track_tokens_seen": track_tokens_seen
+        }, checkpoint_path)
 
 
 def load_checkpoint(
@@ -179,5 +205,13 @@ def load_checkpoint(
     # 2. Restore the model state.
     # 3. Restore the optimizer state.
     # 4. Return metadata such as epoch and loss history.
-
-    raise NotImplementedError("Implement load_checkpoint.")
+    checkpoint = torch.load(checkpoint_path)
+    model.load_state_dict(checkpoint["model_state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    
+    return {
+        "epoch": checkpoint["epoch"],
+        "train_losses": checkpoint["train_losses"],
+        "val_losses": checkpoint["val_losses"],
+        "track_tokens_seen": checkpoint["track_tokens_seen"]
+    }
