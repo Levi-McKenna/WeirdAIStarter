@@ -26,7 +26,6 @@ def text_to_token_ids(text, tokenizer):
     # 3. Add a batch dimension using unsqueeze(0).
 
     tokens = torch.tensor(tokenizer.encode(text))
-    # tokens = torch.tensor(tokens)
     return tokens.unsqueeze(0)
 
 
@@ -77,7 +76,7 @@ def generate_text_simple(model, input_ids, max_new_tokens, context_size):
         with torch.no_grad():
             logits = model(input_ids)
         logits = logits[:, -1, :]
-        probs = torch.nn.functional.softmax(logits)
+        probs = torch.nn.functional.softmax(logits, dim=-1)
         next_token_id = torch.argmax(probs, dim=-1, keepdim=True)
         input_ids = torch.cat((input_ids, next_token_id), dim=1)
     return input_ids
