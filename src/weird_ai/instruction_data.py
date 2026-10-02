@@ -14,8 +14,14 @@ def format_input(entry):
     # 2. Add the ### Instruction section.
     # 3. Add the ### Input section only when entry["input"] is not empty.
     # 4. Return the complete prompt.
+    instruction_text = f"\n\n### Instruction:\n{entry["instruction"]}"
+    full_text = instruction_text + (
+            f"\n\n### Input:\n{entry["input"]}"
+            if entry["input"]
+            else ""
+    )
 
-    raise NotImplementedError("Implement format_input.")
+    return full_text
 
 
 def format_response(entry):
@@ -27,7 +33,7 @@ def format_response(entry):
     # Return a string like:
     # "\n\n### Response:\n..."
 
-    raise NotImplementedError("Implement format_response.")
+    return f"\n\n### Response:\n{entry["output"]}"
 
 
 def format_full_example(entry):
@@ -37,8 +43,7 @@ def format_full_example(entry):
 
     # TODO:
     # Combine format_input(entry) and format_response(entry).
-
-    raise NotImplementedError("Implement format_full_example.")
+    return format_input(entry) + format_response(entry)
 
 
 def validate_instruction_entry(entry):
@@ -49,5 +54,8 @@ def validate_instruction_entry(entry):
     # TODO:
     # Check for instruction, input, and output keys.
     # Verify that instruction and output are not empty.
-
-    raise NotImplementedError("Implement validate_instruction_entry.")
+    if not ("instruction" in entry and "input" in entry and "output" in entry):
+        return False
+    if not (entry["instruction"] and entry["input"] and entry["output"]):
+        return False
+    return True
