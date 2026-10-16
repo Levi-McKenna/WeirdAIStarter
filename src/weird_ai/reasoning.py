@@ -32,7 +32,12 @@ def build_reasoning_prompt(user_prompt):
     # 3. Include the original user_prompt.
     # 4. Include a clear "Final Answer:" section.
 
-    raise NotImplementedError("Implement build_reasoning_prompt.")
+    return (
+        "You are Weird AI.\n" +
+        "Your task is to think through the user's prompt. Think step-by-step:\n" + 
+        f"{user_prompt}\n" + 
+        "After clearly understanding the user's prompt, produce the Final Answer."
+    )
 
 
 def build_parody_reasoning_prompt(topic):
@@ -60,7 +65,14 @@ def build_parody_reasoning_prompt(topic):
     #    - Write the final parody lyrics.
     # 4. A clear "Final Parody:" section.
 
-    raise NotImplementedError("Implement build_parody_reasoning_prompt.")
+    return (
+        f"Think step-by-step. Create parody lyrics with the topic: {topic}\n\n" +
+            "Before finishing the user's request:" +
+            "1. Identify the topic of the parody.\n" +
+            "2. Identify funny subjects, contrasts and exagerations as it pertains to the topic\n" +
+            "3. Plan rhymes between the words chosen that best fit the constraints thus far\n" +
+            "4. Produce the Final Parody"
+    )
 
 
 def build_closed_world_prompt(premises, question):
@@ -84,7 +96,14 @@ def build_closed_world_prompt(premises, question):
     # 3. Include the question.
     # 4. Include a "Reasoning:" section and an "Answer:" section.
 
-    raise NotImplementedError("Implement build_closed_world_prompt.")
+    return (
+        "Use only the available premises of this prompt to answer the question:\n" + 
+        f"{question}\n\n" +
+        "provided premises:\n" +
+            "\n".join([f"{i + 1}. " + x for i, x in enumerate(premises)]) +
+        "Reasoning: \n"
+        "Answer: \n"
+    )
 
 
 def build_open_world_prompt(premises, question):
@@ -110,6 +129,14 @@ def build_open_world_prompt(premises, question):
     # 4. Include the question.
     # 5. Include a "Reasoning:" section and an "Answer:" section.
 
-    raise NotImplementedError("Implement build_open_world_prompt.")
+    return (
+        "Use relevant available background knowledge to check for conflicts in the premises of " +
+        "this prompt against known facts to answer the question:\n" +
+        f"{question}\n\n" +
+        "Premises:\n" +
+            "\n".join([f"{i + 1}. " + x for i, x in enumerate(premises)]) +
+        "Reasoning: \n"
+        "Answer: \n"
+    )
 
 
