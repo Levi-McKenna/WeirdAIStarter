@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 
 
 class LyricsDataset(Dataset):
-    def __init__(self, tokens, block_size, stride):
+    def __init__(self, tokens, block_size, stride=1):
         self.tokens = tokens
         self.stride = stride
         self.block_size = block_size
