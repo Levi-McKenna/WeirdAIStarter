@@ -54,7 +54,11 @@ def get_device(preferred_device: str | None = None) -> torch.device:
     # 3. If Apple Silicon MPS is available, return an MPS device.
     # 4. Otherwise, return a CPU device.
 
-    raise NotImplementedError("Implement get_device.")
+    if (preferred_device):
+        return torch.device(preferred_device)
+    if (torch.cuda.is_available()):
+        return torch.device("cuda")
+    return torch.device("mps" if torch.mps.is_available() else "cpu")
 
 
 def load_tokenizer(model_name: str = DEFAULT_MODEL_NAME) -> Any:
@@ -76,7 +80,13 @@ def load_tokenizer(model_name: str = DEFAULT_MODEL_NAME) -> Any:
     #    tokenizer has no pad_token, set tokenizer.pad_token to tokenizer.eos_token.
     # 4. Return the tokenizer.
 
-    raise NotImplementedError("Implement load_tokenizer.")
+    if (AutoTokenizer is None):
+        raise ImportError("AutoTokenizer is not available. Hugging Face Transformers must be installed")
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    if (tokenizer.pad_token is None):
+        tokenizer.pad_token = tokenizer.eos_token
+    return tokenizer
+
 
 
 def load_model(
@@ -103,7 +113,14 @@ def load_model(
     # 5. Put the model in evaluation mode with model.eval().
     # 6. Return the model.
 
-    raise NotImplementedError("Implement load_model.")
+    if (AutoModelForCausalLM is None):
+        raise ImportError("Language Model is not available. Hugging Face Transformers must be installed")
+    if (device is None):
+        device = get_device()
+    model = AutoModelForCausalLM.from_pretrained(model_name)
+    model.to(device)
+    model.eval()
+    return model
 
 
 def tokenize_prompt(
@@ -128,7 +145,12 @@ def tokenize_prompt(
     # 2. Move every tensor in the returned dictionary to the selected device.
     # 3. Return the dictionary.
 
-    raise NotImplementedError("Implement tokenize_prompt.")
+    if (device is None):
+        device = get_device()
+    tokenized_input = tokenizer(prompt, return_tensors="pt")
+    for tensor in tokenized_input.values():
+        tensor.to(device)
+    return tokenized_input
 
 
 def decode_generated_tokens(
@@ -153,8 +175,11 @@ def decode_generated_tokens(
     # 2. Use tokenizer.decode(..., skip_special_tokens=skip_special_tokens).
     # 3. Return the decoded text.
 
-    raise NotImplementedError("Implement decode_generated_tokens.")
-
+    token_ids = generated_token_ids
+    if (len(generated_token_ids.shape) > 1):
+        token_ids = generated_token_ids[0]
+    decoded = tokenizer.decode(token_ids, skip_special_tokens=skip_special_tokens)
+    return decoded
 
 def generate_text(
     prompt: str,
@@ -195,7 +220,22 @@ def generate_text(
     # 7. Decode the generated token IDs with decode_generated_tokens().
     # 8. Return the decoded generated text.
 
-    raise NotImplementedError("Implement generate_text.")
+    if (device is None):
+        device = get_device()
+    if (model is None):
+        model = load_model(model_name, device=device)
+    if (tokenizer is None):
+        tokenizer = load_tokenizer(model_name)
+
+    tokenized_prompt = tokenize_prompt(tokenizer, prompt)
+    with torch.no_grad():
+        gen_tokens = model.generate(
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_k=top_k,
+            do_sample=do_sample,
+            pad_token_id=tokenizer.eos_token_id)
+    return decode_generated_tokens(tokenizer, gen_tokens)
 
 
 def generate_with_reasoning(
@@ -229,5 +269,8 @@ def generate_with_reasoning(
     # 1. Use build_reasoning_prompt(user_prompt) to create a reasoning prompt.
     # 2. Pass that reasoning prompt to generate_text().
     # 3. Return the generated text.
-
-    raise NotImplementedError("Implement generate_with_reasoning.")
+    reasoning_prompt = build_reasoning_prompt(user_prompt)
+    text = generate_text(reasoning_prompt, model=model, tokenizer=tokenizer,
+                         model_name=model_name, max_new_tokens=max_new_tokens,
+                         temperature=temperature, top_k=top_k, device=device)
+    return text
